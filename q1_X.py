@@ -72,75 +72,57 @@ def Was_an_attack(A, n, t):
       - n: int, minimum number of same-type requests in any window of length t.
       - t: float, size of the time window in seconds.
 
+    First of all we check if A can have an attack by checking it's length.
+    Then we sort A and the algorithm starts.
+    We create an empty dictionary, then we loop through A, making each unique word a key in the dictionary, and the value a queue of all the requests.
+    If a key already exist, we add the request to the queue.
+    If the queue size is bigger than n, we check the front and tail to see if their difference is smaller than t.
+    Otherwise, returning 0 if there's no attack.
+
+
     Returns:
       - [message:str, first_timestamp:float, first_type:str] on detection,
       - None if no attack is found.
-
-    Raises:
-      - TypeError or ValueError on invalid inputs.
     """
-    # Validate inputs
-    if not isinstance(A, list):
-        raise TypeError("A must be a list of [type, timestamp] entries")
-    if not A:
-        raise ValueError("A must not be empty")
-    if not isinstance(n, int):
-        raise TypeError("n must be an integer")
-    if n <= 0:
-        raise ValueError("n must be positive")
-    try:
-        t = float(t)
-    except (TypeError, ValueError):
-        raise TypeError("t must be a number")
-    if t <= 0:
-        raise ValueError("t must be positive")
 
     # If fewer entries than required, no possible attack
+
     if len(A) < n:
         return 0
 
-    # Parse and validate each entry
-    events = []
-    for entry in A:
-        if not (isinstance(entry, (list, tuple)) and len(entry) == 2):
-            raise ValueError("Each entry in A must be a list or tuple of length 2")
-        req_type, ts = entry
-        if not isinstance(req_type, str) or not req_type:
-            raise ValueError("Request type must be a non-empty string")
-        try:
-            ts = float(ts)
-        except (TypeError, ValueError):
-            raise TypeError("Timestamp must be a number")
-        events.append((req_type, ts))
+    # 1) Sort A by timestamp (O(N log N))
+    A.sort(key=lambda x: x[1])
 
-    # Sort by timestamp (O(N log N))
-    events.sort(key=lambda x: x[1])
+    windows = {}            # maps req_type.lower() → Queue of (ts, original_type)
+    attacks = []            # will collect each time a new attack “starts”
 
-    # Sliding windows per request type
-    windows = {}
-    for req_type, ts in events:
+    for req_type, ts in A:
         key = req_type.lower()
         if key not in windows:
             windows[key] = Queue()
         q = windows[key]
 
-        # Enqueue new event
+        # Remember how many were in the queue *before* enqueuing the new event:
+        old_size = q.q_size
+
+        # 2) enqueue the new event:
         q.enqueue((ts, req_type))
-        # Evict old events outside [ts - t, ts]
-        while not q.empty() and q.front()[0] < ts - t:
+
+        # 3) Evict anything with timestamp < (ts - t):
+        while (not q.empty()) and (q.front()[0] < ts - t):
             q.dequeue()
-        # Check attack condition
-        if q.q_size >= n:
+
+        # 4) If we have just gone from <n to ≥n, record it as a new attack:
+        if old_size < n <= q.q_size:
             first_ts, first_type = q.front()
             msg = f"There was an attack on second {first_ts}"
-            return [msg, first_ts, first_type]
+            attacks.append([msg, first_ts, first_type])
 
-    # No attack detected
-    return 0
+    # 5) Return all detections, or 0 if none were found:
+    return attacks if attacks else 0
 
-
-A=[['Shelf',1.1], ['Shelf',1.2], ['sheLf',1.3], ['sheLf',1.5], ['SHeLF',0.01], ['NEW USER',2.5], ['Rating',5.9]]
-result1 = Was_an_attack(A, 5, 5)
+A=[['Shelf',1.1], ['Shelf',10],  ['NEW USER',2.5],['sheLf',10], ['sheLf',10], ['SHeLF',10], ['Rating',5.9]]
+result1 = Was_an_attack(A, 4, 5)
 print(result1)
 
 A=[['shelf',10],['shelf',5],['flower',1.76]]
