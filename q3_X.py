@@ -1,6 +1,7 @@
 # ~~~ This is a template for question 3  ~~~
 
 #Imports:
+import pandas as pd
 
 #Path for data:
 path='Write here the file path, and use is later'
@@ -49,16 +50,35 @@ class HashTable:
 ###Part A###
 
     def hash_function(self,key):                #Logic of hash function.
-        if self.hash_function_method=="mod":
-            return '----Replace Me------'
-        elif self.hash_function_method=="multiplication":
-            return int(self.m*(key*self.A-int(key*self.A)))
+        """
+        Primary hash function:
+        - if "mod"            : h(k) = k mod m
+        - if "multiplication": h(k) = floor(m * ( (k*A) - floor(k*A) ))
+        """
+        if self.hash_function_method == "mod":
+            return key % self.m
+        elif self.hash_function_method == "multiplication":
+            # fractional part of k*A
+            frac = (key * self.A) - int(key * self.A)
+            return int(self.m * frac)
+        else:
+            raise ValueError(f"Unknown hash_function_method: {self.hash_function_method}")
+
 
     def hash_function_2(self,key):              #Logic of hash function, when using OA_Double_Hashing.
-        if self.hash_function_method=="mod":
-            return (self.m_2-key%self.m_2)
-        elif self.hash_function_method=="multiplication":
-            return '----Replace Me------'
+        """
+        Secondary hash function (only used in double hashing):
+        - if "mod"            : h2(k) = m_2 – (k mod m_2)
+        - if "multiplication": h2(k) = floor(m_2 * ((k*A_2) - floor(k*A_2)))
+        """
+        if self.hash_function_method == "mod":
+            # Standard “division” second hash
+            return (self.m_2 - (key % self.m_2))
+        elif self.hash_function_method == "multiplication":
+            frac = (key * self.A_2) - int(key * self.A_2)
+            return int(self.m_2 * frac)
+        else:
+            raise ValueError(f"Unknown hash_function_method: {self.hash_function_method}")
 
 
     def insert(self,key=int,value=str):
@@ -101,7 +121,7 @@ class HashTable:
                 counter+=1
 
 ###Part B###
-                new_place='----Replace Me------'
+                new_place = (place + i * i) % self.m
 
                 if self.keys[new_place]==[key]:         #Replacing the value.
                     self.data[new_place]=[value]
@@ -175,7 +195,7 @@ class HashTable:
                 counter += 1
 
 ###Part C###
-                new_place = '----Replace Me------'
+                new_place = (self.hash_function(key) + i * self.hash_function_2(key)) % self.m
 
                 if self.keys[new_place] == []:              #If we have an empty slot, this means that we do not have the key in the table.
                     break
@@ -231,10 +251,82 @@ class HashTable:
                     return True,counter
             return False,counter
 
+def compute_efficiency(results_d):
+    """
+    Given `results_d` from Part D (returned by data_hashing),
+    compute efficiency = total_probes / n_records for each config.
+    """
+    efficiencies = {}
+    for sheet_name, (n_records, sheet_probes) in results_d.items():
+        eff_dict = {}
+        for label, total_probes in sheet_probes.items():
+            eff_dict[label] = total_probes / n_records if n_records > 0 else float("inf")
+        efficiencies[sheet_name] = eff_dict
+    return efficiencies
+
 def data_hashing(path):
-    ###Part D###
-    #data handling
-    pass
+    ### Part D: build & insert into each hash‐table configuration
+
+    # 1. Read all sheets at once (keys in first column, cast to int):
+    all_sheets = pd.read_excel(path, sheet_name=None)
+
+    # 2. Define the six (m, hash, collision) configurations exactly as in EX2:
+    configs = {
+        "mod_chain": {
+            "size": 149, "hash_meth": "mod", "collision": "Chain",
+            "m": 149, "A": 0.0, "m_2": None, "A_2": None
+        },
+        "mod_quad": {
+            "size": 149, "hash_meth": "mod", "collision": "OA_Quadratic_Probing",
+            "m": 149, "A": 0.0, "m_2": None, "A_2": None
+        },
+        "mod_double": {
+            "size": 149, "hash_meth": "mod", "collision": "OA_Double_Hashing",
+            "m": 149, "A": 0.0, "m_2": 97, "A_2": None
+        },
+        "mul_chain": {
+            "size": 149, "hash_meth": "multiplication", "collision": "Chain",
+            "m": 149, "A": 0.589, "m_2": None, "A_2": None
+        },
+        "mul_quad": {
+            "size": 149, "hash_meth": "multiplication", "collision": "OA_Quadratic_Probing",
+            "m": 149, "A": 0.589, "m_2": None, "A_2": None
+        },
+        "mul_double": {
+            "size": 149, "hash_meth": "multiplication", "collision": "OA_Double_Hashing",
+            "m": 149, "A": 0.589, "m_2": 97, "A_2": 0.405
+        },
+    }
+
+    # 3. For each sheet, extract all integer keys and insert into each config:
+    results = {}
+    for sheet_name, df in all_sheets.items():
+        keys = df.iloc[:, 0].dropna().astype(int).tolist()
+        n_records = len(keys)
+
+        # Keep (n_records, total_probes_for_each_config) together:
+        sheet_probes = {}
+        for label, params in configs.items():
+            H = HashTable(
+                size=params["size"],
+                hash_function_method=params["hash_meth"],
+                collision_handling=params["collision"],
+                m=params["m"],
+                A=params["A"],
+                m_2=params["m_2"],
+                A_2=params["A_2"]
+            )
+            total_probes = 0
+            for k in keys:
+                total_probes += H.insert(k, str(k))
+            sheet_probes[label] = total_probes
+
+        results[sheet_name] = (n_records, sheet_probes)
+
     ###Part E###
     #efficiency value
-    pass
+
+    return (results)
+
+
+print(data_hashing('data.xlsx'))
