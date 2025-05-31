@@ -4,7 +4,7 @@
 import pandas as pd
 
 #Path for data:
-path='Write here the file path, and use is later'
+path='data.xlsx'
 
 #Implement HashTable class:
 class HashTable:
@@ -326,7 +326,7 @@ def data_hashing(path):
     ###Part E###
     #efficiency value
 
-    return (results)
+    return compute_efficiency(results)
 
 
-print(data_hashing('data.xlsx'))
+print(data_hashing(path))
