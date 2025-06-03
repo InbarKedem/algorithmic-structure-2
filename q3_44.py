@@ -330,3 +330,165 @@ def data_hashing(path):
 
 
 print(data_hashing(path))
+
+
+
+
+#part f- sanity check
+def compute_efficiency(results_d):
+    """
+    Given `results_d` from Part D (returned by data_hashing),
+    compute efficiency = total_probes / n_records for each config.
+    """
+    efficiencies = {}
+    for sheet_name, (n_records, sheet_probes) in results_d.items():
+        eff_dict = {}
+        for label, total_probes in sheet_probes.items():
+            eff_dict[label] = total_probes / n_records if n_records > 0 else float("inf")
+        efficiencies[sheet_name] = eff_dict
+    return efficiencies
+
+def data_hashing(path):
+    ### Part D: build & insert into each hash‐table configuration
+
+    # 1. Read all sheets at once (keys in first column, cast to int):
+    all_sheets = pd.read_excel(path, sheet_name=None)
+
+    # 2. Define the six (m, hash, collision) configurations exactly as in EX2:
+    configs = {
+        "mod_chain": {
+            "size": 149, "hash_meth": "mod", "collision": "Chain",
+            "m": 149, "A": 0.0, "m_2": None, "A_2": None
+        },
+        "mod_quad": {
+            "size": 149, "hash_meth": "mod", "collision": "OA_Quadratic_Probing",
+            "m": 149, "A": 0.0, "m_2": None, "A_2": None
+        },
+        "mod_double": {
+            "size": 149, "hash_meth": "mod", "collision": "OA_Double_Hashing",
+            "m": 149, "A": 0.0, "m_2": 97, "A_2": None
+        },
+        "mul_chain": {
+            "size": 149, "hash_meth": "multiplication", "collision": "Chain",
+            "m": 149, "A": 0.618, "m_2": None, "A_2": None
+        },
+        "mul_quad": {
+            "size": 149, "hash_meth": "multiplication", "collision": "OA_Quadratic_Probing",
+            "m": 149, "A": 0.618, "m_2": None, "A_2": None
+        },
+        "mul_double": {
+            "size": 149, "hash_meth": "multiplication", "collision": "OA_Double_Hashing",
+            "m": 149, "A": 0.618, "m_2": 97, "A_2": 0.405
+        },
+    }
+
+    # 3. For each sheet, extract all integer keys and insert into each config:
+    results = {}
+    for sheet_name, df in all_sheets.items():
+        keys = df.iloc[:, 0].dropna().astype(int).tolist()
+        n_records = len(keys)
+
+        # Keep (n_records, total_probes_for_each_config) together:
+        sheet_probes = {}
+        for label, params in configs.items():
+            H = HashTable(
+                size=params["size"],
+                hash_function_method=params["hash_meth"],
+                collision_handling=params["collision"],
+                m=params["m"],
+                A=params["A"],
+                m_2=params["m_2"],
+                A_2=params["A_2"]
+            )
+            total_probes = 0
+            for k in keys:
+                total_probes += H.insert(k, str(k))
+            sheet_probes[label] = total_probes
+
+        results[sheet_name] = (n_records, sheet_probes)
+
+    ###Part E###
+    #efficiency value
+
+    return compute_efficiency(results)
+print(data_hashing(path))
+#as we can see we got 1.0 in sheet 3 as the best effciency while for sheet 1 our effeciency got lower, in contarst to what we predicted, probaly dew to low amounts of data.
+#thus we will try increasing m
+def compute_efficiency(results_d):
+    """
+    Given `results_d` from Part D (returned by data_hashing),
+    compute efficiency = total_probes / n_records for each config.
+    """
+    efficiencies = {}
+    for sheet_name, (n_records, sheet_probes) in results_d.items():
+        eff_dict = {}
+        for label, total_probes in sheet_probes.items():
+            eff_dict[label] = total_probes / n_records if n_records > 0 else float("inf")
+        efficiencies[sheet_name] = eff_dict
+    return efficiencies
+
+def data_hashing(path):
+    ### Part D: build & insert into each hash‐table configuration
+
+    # 1. Read all sheets at once (keys in first column, cast to int):
+    all_sheets = pd.read_excel(path, sheet_name=None)
+
+    # 2. Define the six (m, hash, collision) configurations exactly as in EX2:
+    configs = {
+        "mod_chain": {
+            "size": 248, "hash_meth": "mod", "collision": "Chain",
+            "m": 248, "A": 0.0, "m_2": None, "A_2": None
+        },
+        "mod_quad": {
+            "size": 248, "hash_meth": "mod", "collision": "OA_Quadratic_Probing",
+            "m": 248, "A": 0.0, "m_2": None, "A_2": None
+        },
+        "mod_double": {
+            "size": 248, "hash_meth": "mod", "collision": "OA_Double_Hashing",
+            "m": 248, "A": 0.0, "m_2": 97, "A_2": None
+        },
+        "mul_chain": {
+            "size": 248, "hash_meth": "multiplication", "collision": "Chain",
+            "m": 248, "A": 0.618, "m_2": None, "A_2": None
+        },
+        "mul_quad": {
+            "size": 248, "hash_meth": "multiplication", "collision": "OA_Quadratic_Probing",
+            "m": 248, "A": 0.618, "m_2": None, "A_2": None
+        },
+        "mul_double": {
+            "size": 248, "hash_meth": "multiplication", "collision": "OA_Double_Hashing",
+            "m": 248, "A": 0.618, "m_2": 97, "A_2": 0.405
+        },
+    }
+
+    # 3. For each sheet, extract all integer keys and insert into each config:
+    results = {}
+    for sheet_name, df in all_sheets.items():
+        keys = df.iloc[:, 0].dropna().astype(int).tolist()
+        n_records = len(keys)
+
+        # Keep (n_records, total_probes_for_each_config) together:
+        sheet_probes = {}
+        for label, params in configs.items():
+            H = HashTable(
+                size=params["size"],
+                hash_function_method=params["hash_meth"],
+                collision_handling=params["collision"],
+                m=params["m"],
+                A=params["A"],
+                m_2=params["m_2"],
+                A_2=params["A_2"]
+            )
+            total_probes = 0
+            for k in keys:
+                total_probes += H.insert(k, str(k))
+            sheet_probes[label] = total_probes
+
+        results[sheet_name] = (n_records, sheet_probes)
+
+    ###Part E###
+    #efficiency value
+
+    return compute_efficiency(results)
+print(data_hashing(path))
+#because sheet 1 contains ids which are close numbers then making m, the amount of places in the output vector, bigger makes the hashing more effecient
