@@ -21,18 +21,30 @@ class Heap():
 
     def insert(self, x):
         #Add x to the end and increase size and heapify the new member
+        self.size += 1
         self.t.append(x)
-        self.size+=1
-        self.heapify(self.size-1)
+        i = self.size - 1
+        while i > 0:
+            parent = (i - 1) // 2
+            if self.t[i] < self.t[parent]:
+                # swap child and parent
+                self.t[i], self.t[parent] = self.t[parent], self.t[i]
+                i = parent
+            else:
+                break
 
     def delete_min(self):
         #Remove the value in the first index and put the value in the end of the heap and heapify 0 to remain a heap
-        min=self.t[0]
-        self.t[0]=self.t[self.size-1]
-        self.size-=1
-        self.t.pop(self.size)
-        self.heapify(0)
-        return min
+        if self.size == 0:
+            raise ValueError("Heap is empty")
+        min_val = self.t[0]
+        # move last element to root
+        self.t[0] = self.t[self.size - 1]
+        self.t.pop(self.size - 1)
+        self.size -= 1
+        if self.size > 0:
+            self.heapify(0)
+        return min_val
 
     def heapify(self,i):
         #this function is a recursive function that checks if the children of the input index
